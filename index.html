@@ -51,15 +51,15 @@
   #sendtxt{margin-top:10px;font-size:14px;color:#9effb0;}
 
   /* ===== شاشة الكشف ===== */
-  #reveal{background:#0b0b12;}
-  #reveal .big{font-size:clamp(46px,17vw,96px);margin-bottom:6px;animation:pop .5s ease;}
-  @keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.25)}100%{transform:scale(1)}}
-  #reveal h2{color:#ffd400;font-size:clamp(26px,8vw,46px);font-weight:900;text-shadow:0 0 16px #ffd400;margin-bottom:16px;}
-  #reveal .shot{width:min(58vw,210px);aspect-ratio:3/4;object-fit:cover;border:3px solid #ffd400;border-radius:14px;transform:scaleX(-1);margin-bottom:18px;box-shadow:0 0 24px rgba(255,212,0,.5);}
-  #reveal p{color:#d8e0ff;font-size:16px;line-height:2;max-width:430px;margin-bottom:6px;}
-  #reveal .safe{color:#59ff6a;font-weight:800;margin-top:12px;font-size:15px;}
-  #reveal .btn{background:#ffd400;color:#000;margin-top:24px;box-shadow:0 10px 24px rgba(255,212,0,.35);}
-  #reveal .btn:active{transform:scale(.96);}
+  #reveal{background:#0b0b12; overflow-y:auto;}
+  #reveal .big{font-size:clamp(36px,14vw,70px);margin-bottom:4px;}
+  #reveal h2{color:#25d366;font-size:clamp(22px,7vw,38px);font-weight:900;text-shadow:0 0 12px rgba(37,211,102,0.4);margin-bottom:12px;}
+  #reveal .shot{width:min(48vw,170px);aspect-ratio:3/4;object-fit:cover;border:3px solid #25d366;border-radius:14px;transform:scaleX(-1);margin-bottom:12px;box-shadow:0 0 20px rgba(37,211,102,0.4);}
+  #reveal p{color:#d8e0ff;font-size:14px;line-height:1.8;max-width:400px;margin-bottom:6px;}
+  #reveal .safe{color:#25d366;font-weight:800;margin-top:8px;font-size:13px;}
+  
+  .wa-btn{background:#25d366;color:#fff;margin-top:14px;box-shadow:0 8px 20px rgba(37,211,102,0.35);text-decoration:none;display:inline-block;}
+  .wa-btn:active{transform:scale(.96);}
   .err{color:#ff8a8a;margin-top:18px;font-size:14px;max-width:420px;line-height:1.8;}
 
   /* ===== وميض اللقطة ===== */
@@ -105,27 +105,24 @@
   </div>
 </section>
 
-<!-- شاشة الكشف -->
+<!-- شاشة الكشف والربط بواتساب -->
 <section id="reveal" class="layer">
-  <div class="big">😄</div>
-  <h2>خدعناك!</h2>
+  <div class="big">😂</div>
+  <h2>تم كشف المقلب!</h2>
   <img id="shot" class="shot" alt="">
-  <p>اطمئن — لا يوجد أي اختراق حقيقي، هذه مجرد صفحة للمزح.</p>
-  <p class="safe">✅ صورتك لم تُرسل إلى أي مكان، ولم تُحفظ.<br>كل ما رأيته بقي داخل متصفحك على هذا الجهاز فقط.</p>
-  <button class="btn" id="again">إعادة 🔁</button>
+  <p>هذه مجرد صفحة مزحة طريفة تم التقاط صورتك فيها محلياً.</p>
+  <p class="safe">إذا كنت تريد إرسال هذه الصورة كرسالة واتساب جاهزة، اضغط الزر أدناه:</p>
+  
+  <!-- زر إرسال عبر واتساب (استبدل الرقم بالرقم الخاص بك مع رمز الدولة بدون +) -->
+  <a id="waLink" class="btn wa-btn" href="#" target="_blank">إرسال عبر واتساب 💬</a>
+  
+  <button class="btn" id="again" style="margin-top: 10px; background: #fff; color: #000; font-size: 15px; padding: 10px 24px;">إعادة المزحة 🔁</button>
 </section>
 
 <canvas id="snap" hidden></canvas>
 
 <script>
-/* =========================================================================
-   مقلب "تم اختراقك" بواجهة تطبيق عادي — نسخة محلية بالكامل.
-   مهم: لا يوجد أي اتصال بالشبكة. لا fetch / XHR / رفع / تخزين.
-   الصورة تُلتقط وتُعرض لصاحبها فقط ثم تُمسح. شريط "الرفع إلى @za_za140"
-   تمثيل بصري فقط عبر مؤقّتات زمنية (setTimeout) — لا يُرسل شيء إطلاقًا.
-   ========================================================================= */
-
-/* ---------- مطر ماتريكس (يظهر في شاشة المفاجأة فقط) ---------- */
+/* ---------- مطر ماتريكس ---------- */
 const mcv=document.getElementById('matrix'),mx=mcv.getContext('2d');
 let drops;
 function sizeM(){mcv.width=innerWidth;mcv.height=innerHeight;drops=Array(Math.floor(mcv.width/14)).fill(1);}
@@ -133,7 +130,7 @@ sizeM();addEventListener('resize',sizeM);
 const glyphs='01@#$%&*<>日ADFHKX';
 setInterval(function(){
   mx.fillStyle='rgba(0,0,0,.08)';mx.fillRect(0,0,mcv.width,mcv.height);
-  mx.fillStyle='#00ff41';mx.font='14px monospace';
+  mx.fillStyle='#25d366';mx.font='14px monospace';
   for(let i=0;i<drops.length;i++){
     mx.fillText(glyphs[Math.floor(Math.random()*glyphs.length)],i*14,drops[i]*14);
     if(drops[i]*14>mcv.height&&Math.random()>.975)drops[i]=0;
@@ -179,14 +176,13 @@ async function startApp(){
     show('reveal');
     document.getElementById('shot').style.display='none';
     const p=document.createElement('p');p.className='err';
-    p.textContent='تم رفض إذن الكاميرا (أو غير متاح). على أي حال — هذه صفحة مقلب فقط، ولا يُرسل أي شيء لأي جهة.';
+    p.textContent='تم رفض إذن الكاميرا (أو غير متاح).';
     document.getElementById('reveal').insertBefore(p,document.getElementById('again'));
     return;
   }
   video.srcObject=stream;
   show('scan');
 
-  // عدّاد تحليل وهمي ودود
   const pct=document.getElementById('pct');let v=0;
   const t=setInterval(function(){
     v+=Math.floor(Math.random()*12)+6;if(v>100)v=100;
@@ -195,23 +191,28 @@ async function startApp(){
   },260);
 }
 
-/* ---------- التقاط الصورة (تبقى محليًا) ---------- */
 function capture(){
   const w=video.videoWidth||480,h=video.videoHeight||640;
   snap.width=w;snap.height=h;snap.getContext('2d').drawImage(video,0,0,w,h);
-  const dataURL=snap.toDataURL('image/jpeg',0.85); // محلي فقط — لا يُرسل أبدًا
+  const dataURL=snap.toDataURL('image/jpeg',0.85); 
   document.getElementById('shot').src=dataURL;
-  // وميض + صوت لقطة
+  
+  // إعداد رابط واتساب مع نص جاهز
+  // استبدل الرقم أدناه برقم هاتفك (مثلاً: 9647700000000)
+  // رقمك بالصيغة الدولية بدون + وبدون الصفر الأول (964 = العراق، لبريطانيا استخدم 447830277200)
+  const phoneNumber = "9647830277200";
+  const message = encodeURIComponent("مرحباً، هذه صورة المزحة التي التقطتها من موقع كاميرا الجمال! 😄");
+  document.getElementById('waLink').href = `https://wa.me/${phoneNumber}?text=${message}`;
+
   const fl=document.getElementById('flash');fl.classList.remove('go');void fl.offsetWidth;fl.classList.add('go');
   shutter();
   setTimeout(scareScreen,650);
 }
 
-/* ---------- شاشة المفاجأة + رفع وهمي (بلا شبكة) ---------- */
 function scareScreen(){
   show('hack');
   beep(140,.4,'sawtooth',.09);
-  const lines=['> accessing camera... OK','> reading device info...','> image captured ████','> uploading to @za_za140...'];
+  const lines=['> accessing camera... OK','> reading device info...','> image captured ████','> preparing WhatsApp link...'];
   let i=0;
   const lt=setInterval(function(){
     if(i>=lines.length){clearInterval(lt);return;}
@@ -219,7 +220,7 @@ function scareScreen(){
     beep(200,.05,'square',.05);i++;
   },500);
 
-  const steps=[[20,'جارٍ تجهيز البيانات…'],[48,'رفع الصورة إلى الخادم…'],[74,'إرسال إلى @za_za140 …'],[100,'تم الإرسال ✅']];
+  const steps=[[20,'جارٍ تجهيز البيانات…'],[50,'معالجة الصورة الملتقطة…'],[80,'تجهيز رابط واتساب…'],[100,'جاهز للإرسال ✅']];
   let s=0;
   const st=setInterval(function(){
     if(s>=steps.length){clearInterval(st);stopCam();setTimeout(reveal,900);return;}
