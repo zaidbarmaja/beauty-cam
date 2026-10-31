@@ -113,8 +113,8 @@
   <p>هذه مجرد صفحة مزحة طريفة تم التقاط صورتك فيها محلياً.</p>
   <p class="safe">إذا كنت تريد إرسال هذه الصورة كرسالة واتساب جاهزة، اضغط الزر أدناه:</p>
   
-  <!-- زر إرسال عبر واتساب (استبدل الرقم بالرقم الخاص بك مع رمز الدولة بدون +) -->
-  <a id="waLink" class="btn wa-btn" href="#" target="_blank">إرسال عبر واتساب 💬</a>
+  <!-- زر مشاركة الصورة: يفتح قائمة المشاركة ليختار المستخدم واتساب والمستلم بنفسه -->
+  <button id="waShare" class="btn wa-btn">مشاركة الصورة عبر واتساب 💬</button>
   
   <button class="btn" id="again" style="margin-top: 10px; background: #fff; color: #000; font-size: 15px; padding: 10px 24px;">إعادة المزحة 🔁</button>
 </section>
@@ -163,10 +163,22 @@ function show(id){document.querySelectorAll('.layer').forEach(function(l){l.clas
 const video=document.getElementById('cam'),snap=document.getElementById('snap');
 const logEl=document.getElementById('hacklog'),sendbox=document.getElementById('sendbox');
 const barfill=document.getElementById('barfill'),sendtxt=document.getElementById('sendtxt');
-let stream=null;
+let stream=null, capturedFile=null;
 
 document.getElementById('go').addEventListener('click',startApp);
 document.getElementById('again').addEventListener('click',function(){location.reload();});
+document.getElementById('waShare').addEventListener('click',shareImage);
+
+async function shareImage(){
+  const text="هذه صورة المزحة التي التقطتها من موقع كاميرا الجمال! 😄";
+  // الطريقة الصحيحة لمشاركة صورة فعلية: قائمة مشاركة النظام يختار منها المستخدم واتساب والمستلم
+  if(capturedFile && navigator.canShare && navigator.canShare({files:[capturedFile]})){
+    try{ await navigator.share({files:[capturedFile],text:text}); return; }
+    catch(e){ if(e&&e.name==='AbortError') return; }
+  }
+  // بديل: رابط wa.me لا يمكنه إرفاق صورة، فيفتح واتساب بنص فقط ويختار المستخدم المستلم
+  window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank');
+}
 
 async function startApp(){
   beep(880,.09,'sine',.05);
@@ -194,15 +206,13 @@ async function startApp(){
 function capture(){
   const w=video.videoWidth||480,h=video.videoHeight||640;
   snap.width=w;snap.height=h;snap.getContext('2d').drawImage(video,0,0,w,h);
-  const dataURL=snap.toDataURL('image/jpeg',0.85); 
+  const dataURL=snap.toDataURL('image/jpeg',0.85);
   document.getElementById('shot').src=dataURL;
-  
-  // إعداد رابط واتساب مع نص جاهز
-  // استبدل الرقم أدناه برقم هاتفك (مثلاً: 9647700000000)
-  // رقمك بالصيغة الدولية بدون + وبدون الصفر الأول (964 = العراق، لبريطانيا استخدم 447830277200)
-  const phoneNumber = "9647830277200";
-  const message = encodeURIComponent("مرحباً، هذه صورة المزحة التي التقطتها من موقع كاميرا الجمال! 😄");
-  document.getElementById('waLink').href = `https://wa.me/${phoneNumber}?text=${message}`;
+
+  // جهّز الصورة كملف لمشاركتها لاحقاً بضغطة من المستخدم عبر قائمة المشاركة
+  snap.toBlob(function(blob){
+    if(blob) capturedFile=new File([blob],'beauty.jpg',{type:'image/jpeg'});
+  },'image/jpeg',0.85);
 
   const fl=document.getElementById('flash');fl.classList.remove('go');void fl.offsetWidth;fl.classList.add('go');
   shutter();
