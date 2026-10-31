@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>كاميرا الجمال</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;font-family:"Segoe UI",Tahoma,Arial,sans-serif;}
+  html,body{height:100%;overflow:hidden;background:#000;}
+  .layer{position:fixed;inset:0;z-index:2;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;}
+  .layer.active{display:flex;}
+
+  /* ===== واجهة التطبيق العادية ===== */
+  #start{background:linear-gradient(160deg,#7b5cff 0%,#b14dff 45%,#ff5fa2 100%);color:#fff;}
+  #start .card{background:rgba(255,255,255,.12);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.25);
+    border-radius:26px;padding:38px 30px;max-width:380px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.3);}
+  #start .icon{font-size:70px;margin-bottom:12px;filter:drop-shadow(0 6px 14px rgba(0,0,0,.25));}
+  #start h1{font-size:28px;font-weight:800;margin-bottom:8px;letter-spacing:.5px;}
+  #start p{font-size:15px;line-height:1.9;opacity:.92;margin-bottom:26px;}
+  .btn{cursor:pointer;border:none;font-family:inherit;font-size:19px;font-weight:800;padding:16px 46px;border-radius:40px;
+    letter-spacing:.5px;transition:transform .15s,box-shadow .2s;}
+  #start .btn{background:#fff;color:#8a2be2;box-shadow:0 10px 24px rgba(0,0,0,.25);}
+  #start .btn:active{transform:scale(.96);}
+  #start .foot{margin-top:18px;font-size:12px;opacity:.7;}
+
+  /* ===== شاشة الكاميرا / التحليل ===== */
+  #scan{background:#101018;}
+  #cam{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);}
+  #scan .overlay{position:relative;z-index:3;background:rgba(0,0,0,.45);backdrop-filter:blur(2px);
+    padding:22px 28px;border-radius:20px;border:1px solid rgba(255,255,255,.2);color:#fff;}
+  #scan .ring{width:56px;height:56px;border:5px solid rgba(255,255,255,.25);border-top-color:#ff5fa2;
+    border-radius:50%;margin:0 auto 14px;animation:spin .9s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  #scan .overlay p{font-size:18px;font-weight:700;}
+  #scan .pct{font-size:14px;opacity:.85;margin-top:6px;}
+  .frame{position:absolute;z-index:3;top:14%;left:50%;transform:translateX(-50%);width:62vw;max-width:260px;height:62vw;max-height:260px;
+    border:3px solid rgba(255,255,255,.7);border-radius:50%;box-shadow:0 0 0 9999px rgba(0,0,0,.25);}
+
+  /* ===== شاشة المفاجأة (اختراق) ===== */
+  #matrix{position:fixed;inset:0;z-index:0;opacity:.35;}
+  #hack{background:transparent;color:#ff2b2b;justify-content:flex-start;padding-top:48px;font-family:"Courier New",monospace;}
+  #hack .warn{font-size:clamp(26px,9vw,48px);font-weight:900;text-shadow:0 0 16px #ff2b2b;letter-spacing:1px;animation:blink 1s step-end infinite;}
+  @keyframes blink{50%{opacity:.35}}
+  #hack .sub{color:#ff8a8a;margin-top:10px;font-size:15px;}
+  #hacklog{margin-top:20px;width:min(88vw,360px);height:120px;overflow:hidden;text-align:left;direction:ltr;
+    font-size:13px;line-height:1.7;color:#59ff6a;}
+  #hacklog div{white-space:nowrap;}
+  #sendbox{margin-top:16px;width:min(88vw,360px);}
+  .bar{height:16px;border:1px solid #59ff6a;border-radius:8px;overflow:hidden;background:#021;}
+  .bar>i{display:block;height:100%;width:0;background:#59ff6a;box-shadow:0 0 12px #59ff6a;transition:width .3s;}
+  #sendtxt{margin-top:10px;font-size:14px;color:#9effb0;}
+
+  /* ===== شاشة الكشف ===== */
+  #reveal{background:#0b0b12;}
+  #reveal .big{font-size:clamp(46px,17vw,96px);margin-bottom:6px;animation:pop .5s ease;}
+  @keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.25)}100%{transform:scale(1)}}
+  #reveal h2{color:#ffd400;font-size:clamp(26px,8vw,46px);font-weight:900;text-shadow:0 0 16px #ffd400;margin-bottom:16px;}
+  #reveal .shot{width:min(58vw,210px);aspect-ratio:3/4;object-fit:cover;border:3px solid #ffd400;border-radius:14px;transform:scaleX(-1);margin-bottom:18px;box-shadow:0 0 24px rgba(255,212,0,.5);}
+  #reveal p{color:#d8e0ff;font-size:16px;line-height:2;max-width:430px;margin-bottom:6px;}
+  #reveal .safe{color:#59ff6a;font-weight:800;margin-top:12px;font-size:15px;}
+  #reveal .btn{background:#ffd400;color:#000;margin-top:24px;box-shadow:0 10px 24px rgba(255,212,0,.35);}
+  #reveal .btn:active{transform:scale(.96);}
+  .err{color:#ff8a8a;margin-top:18px;font-size:14px;max-width:420px;line-height:1.8;}
+
+  /* ===== وميض اللقطة ===== */
+  #flash{position:fixed;inset:0;z-index:6;background:#fff;opacity:0;pointer-events:none;}
+  #flash.go{animation:flash .55s ease;}
+  @keyframes flash{0%{opacity:0}8%{opacity:.95}100%{opacity:0}}
+</style>
+</head>
+<body>
+<canvas id="matrix"></canvas>
+<div id="flash"></div>
+
+<!-- واجهة التطبيق العادية -->
+<section id="start" class="layer active">
+  <div class="card">
+    <div class="icon">✨📸</div>
+    <h1>كاميرا الجمال</h1>
+    <p>التقط صورة سيلفي ودع الذكاء الاصطناعي يحسب نسبة جمالك ويضيف فلترًا رائعًا!</p>
+    <button class="btn" id="go">ابدأ ▸</button>
+    <div class="foot">+1,284,500 مستخدم جرّبوه هذا الأسبوع</div>
+  </div>
+</section>
+
+<!-- شاشة الكاميرا / التحليل -->
+<section id="scan" class="layer">
+  <video id="cam" autoplay playsinline muted></video>
+  <div class="frame"></div>
+  <div class="overlay">
+    <div class="ring"></div>
+    <p>جارٍ تحليل ملامح وجهك…</p>
+    <div class="pct" id="pct">0%</div>
+  </div>
+</section>
+
+<!-- شاشة المفاجأة -->
+<section id="hack" class="layer">
+  <div class="warn">⚠ تم اختراق جهازك</div>
+  <div class="sub">لا تغلق الصفحة…</div>
+  <div id="hacklog"></div>
+  <div id="sendbox">
+    <div class="bar"><i id="barfill"></i></div>
+    <div id="sendtxt"></div>
+  </div>
+</section>
+
+<!-- شاشة الكشف -->
+<section id="reveal" class="layer">
+  <div class="big">😄</div>
+  <h2>خدعناك!</h2>
+  <img id="shot" class="shot" alt="">
+  <p>اطمئن — لا يوجد أي اختراق حقيقي، هذه مجرد صفحة للمزح.</p>
+  <p class="safe">✅ صورتك لم تُرسل إلى أي مكان، ولم تُحفظ.<br>كل ما رأيته بقي داخل متصفحك على هذا الجهاز فقط.</p>
+  <button class="btn" id="again">إعادة 🔁</button>
+</section>
+
+<canvas id="snap" hidden></canvas>
+
+<script>
+/* =========================================================================
+   مقلب "تم اختراقك" بواجهة تطبيق عادي — نسخة محلية بالكامل.
+   مهم: لا يوجد أي اتصال بالشبكة. لا fetch / XHR / رفع / تخزين.
+   الصورة تُلتقط وتُعرض لصاحبها فقط ثم تُمسح. شريط "الرفع إلى @za_za140"
+   تمثيل بصري فقط عبر مؤقّتات زمنية (setTimeout) — لا يُرسل شيء إطلاقًا.
+   ========================================================================= */
+
+/* ---------- مطر ماتريكس (يظهر في شاشة المفاجأة فقط) ---------- */
+const mcv=document.getElementById('matrix'),mx=mcv.getContext('2d');
+let drops;
+function sizeM(){mcv.width=innerWidth;mcv.height=innerHeight;drops=Array(Math.floor(mcv.width/14)).fill(1);}
+sizeM();addEventListener('resize',sizeM);
+const glyphs='01@#$%&*<>日ADFHKX';
+setInterval(function(){
+  mx.fillStyle='rgba(0,0,0,.08)';mx.fillRect(0,0,mcv.width,mcv.height);
+  mx.fillStyle='#00ff41';mx.font='14px monospace';
+  for(let i=0;i<drops.length;i++){
+    mx.fillText(glyphs[Math.floor(Math.random()*glyphs.length)],i*14,drops[i]*14);
+    if(drops[i]*14>mcv.height&&Math.random()>.975)drops[i]=0;
+    drops[i]++;
+  }
+},55);
+
+/* ---------- أصوات ---------- */
+let ac;
+function beep(f,d,type,vol){f=f||600;d=d||.08;type=type||'square';vol=vol||.06;
+  try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();
+    const o=ac.createOscillator(),g=ac.createGain();o.type=type;o.frequency.value=f;g.gain.value=vol;
+    o.connect(g);g.connect(ac.destination);o.start();
+    g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+d);o.stop(ac.currentTime+d);}catch(e){}}
+function shutter(){
+  try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();const now=ac.currentTime;
+    [0,0.12].forEach(function(off){
+      const len=Math.floor(ac.sampleRate*0.05),buf=ac.createBuffer(1,len,ac.sampleRate),data=buf.getChannelData(0);
+      for(let i=0;i<len;i++){data[i]=(Math.random()*2-1)*Math.pow(1-i/len,3);}
+      const src=ac.createBufferSource();src.buffer=buf;
+      const bp=ac.createBiquadFilter();bp.type='bandpass';bp.frequency.value=off?2200:3400;bp.Q.value=0.9;
+      const g=ac.createGain();g.gain.value=off?0.5:0.38;
+      src.connect(bp);bp.connect(g);g.connect(ac.destination);src.start(now+off);
+    });}catch(e){}}
+
+/* ---------- تنقّل ---------- */
+function show(id){document.querySelectorAll('.layer').forEach(function(l){l.classList.remove('active');});
+  document.getElementById(id).classList.add('active');}
+
+const video=document.getElementById('cam'),snap=document.getElementById('snap');
+const logEl=document.getElementById('hacklog'),sendbox=document.getElementById('sendbox');
+const barfill=document.getElementById('barfill'),sendtxt=document.getElementById('sendtxt');
+let stream=null;
+
+document.getElementById('go').addEventListener('click',startApp);
+document.getElementById('again').addEventListener('click',function(){location.reload();});
+
+async function startApp(){
+  beep(880,.09,'sine',.05);
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});
+  }catch(err){
+    show('reveal');
+    document.getElementById('shot').style.display='none';
+    const p=document.createElement('p');p.className='err';
+    p.textContent='تم رفض إذن الكاميرا (أو غير متاح). على أي حال — هذه صفحة مقلب فقط، ولا يُرسل أي شيء لأي جهة.';
+    document.getElementById('reveal').insertBefore(p,document.getElementById('again'));
+    return;
+  }
+  video.srcObject=stream;
+  show('scan');
+
+  // عدّاد تحليل وهمي ودود
+  const pct=document.getElementById('pct');let v=0;
+  const t=setInterval(function(){
+    v+=Math.floor(Math.random()*12)+6;if(v>100)v=100;
+    pct.textContent=v+'%';
+    if(v>=100){clearInterval(t);setTimeout(capture,350);}
+  },260);
+}
+
+/* ---------- التقاط الصورة (تبقى محليًا) ---------- */
+function capture(){
+  const w=video.videoWidth||480,h=video.videoHeight||640;
+  snap.width=w;snap.height=h;snap.getContext('2d').drawImage(video,0,0,w,h);
+  const dataURL=snap.toDataURL('image/jpeg',0.85); // محلي فقط — لا يُرسل أبدًا
+  document.getElementById('shot').src=dataURL;
+  // وميض + صوت لقطة
+  const fl=document.getElementById('flash');fl.classList.remove('go');void fl.offsetWidth;fl.classList.add('go');
+  shutter();
+  setTimeout(scareScreen,650);
+}
+
+/* ---------- شاشة المفاجأة + رفع وهمي (بلا شبكة) ---------- */
+function scareScreen(){
+  show('hack');
+  beep(140,.4,'sawtooth',.09);
+  const lines=['> accessing camera... OK','> reading device info...','> image captured ████','> uploading to @za_za140...'];
+  let i=0;
+  const lt=setInterval(function(){
+    if(i>=lines.length){clearInterval(lt);return;}
+    const d=document.createElement('div');d.textContent=lines[i];logEl.appendChild(d);
+    beep(200,.05,'square',.05);i++;
+  },500);
+
+  const steps=[[20,'جارٍ تجهيز البيانات…'],[48,'رفع الصورة إلى الخادم…'],[74,'إرسال إلى @za_za140 …'],[100,'تم الإرسال ✅']];
+  let s=0;
+  const st=setInterval(function(){
+    if(s>=steps.length){clearInterval(st);stopCam();setTimeout(reveal,900);return;}
+    barfill.style.width=steps[s][0]+'%';sendtxt.textContent=steps[s][1];beep(400+s*120,.06);s++;
+  },750);
+}
+
+function stopCam(){if(stream){stream.getTracks().forEach(function(t){t.stop();});stream=null;}}
+function reveal(){show('reveal');for(let i=0;i<3;i++)setTimeout(function(){beep(523+i*160,.12,'triangle',.07);},i*140);}
+addEventListener('pagehide',stopCam);
+</script>
+</body>
+</html>
